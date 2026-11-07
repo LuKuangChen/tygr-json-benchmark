@@ -1,0 +1,16 @@
+[package]
+name = "tygr-json-benchmark"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+nom = "8"
+serde = "1"
+serde_json = { version = "1", features = ["float_roundtrip"] }
+tygr = { path = "../tygr", default-features = false }
+winnow = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
