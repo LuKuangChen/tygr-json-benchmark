@@ -1,7 +1,7 @@
 //! JSON (json.org) in tygr. `JsonValue` (in `value.rs`) is itself the
 //! grammar: its variants convert from the syntax here with
-//! `#[grammar(from = ...)]` and friends. Character classes pick single chars
-//! and `StringOf` matches runs.
+//! `#[tygr(try_from_infallible = ...)]` and friends. Character classes
+//! pick single chars and `StringOf` matches runs.
 
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -25,21 +25,21 @@ pub(crate) type Ws = PhantomData<StringOf<WsChar>>;
 
 type Comma = (Ws, StringEq!(","), Ws);
 
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) struct Json(Ws, JsonValue, Ws);
 
 pub(crate) fn parse(input: &str) -> Option<JsonValue> {
     Json::parse(input).ok().map(|json| json.1)
 }
 
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) struct JsonObject(
     Wrap<(StringEq!("{"), Ws), Option<VecSep<JsonMember, Comma>>, (Ws, StringEq!("}"))>,
 );
 
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) struct JsonMember {
-    #[grammar(from = JsonString)]
+    #[tygr(try_from_infallible = JsonString)]
     key: String,
     colon: (Ws, StringEq!(":"), Ws),
     value: JsonValue,
@@ -56,7 +56,7 @@ impl From<JsonObject> for HashMap<String, JsonValue> {
     }
 }
 
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) struct JsonArray(
     Wrap<(StringEq!("["), Ws), Option<VecSep<JsonValue, Comma>>, (Ws, StringEq!("]"))>,
 );
@@ -73,7 +73,7 @@ impl From<JsonArray> for Vec<JsonValue> {
 
 /// The leading run, then each escape sequence with the run after it.
 /// Without escapes the `Vec` stays empty, so it never allocates.
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) struct JsonString(
     StringEq!("\""),
     StringOf<Unescaped>,
@@ -82,10 +82,10 @@ pub(crate) struct JsonString(
 );
 
 /// Adjacent escapes; a surrogate pair is always within one sequence.
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) struct EscapeSequence(Vec1<Prefix<StringEq!("\\"), Escape>>);
 
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) enum Escape {
     Simple(SimpleEscape),
     Unicode(StringEq!("u"), Hex, Hex, Hex, Hex),
@@ -134,7 +134,7 @@ impl From<JsonString> for String {
     }
 }
 
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) enum JsonBool {
     True(StringEq!("true")),
     False(StringEq!("false")),
@@ -149,20 +149,20 @@ impl From<JsonBool> for bool {
     }
 }
 
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) enum Integer {
     Zero(StringEq!("0")),
     NonZero((OneNine, StringOf<Digit>)),
 }
 
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) struct Exponent {
     e: StringEqCI!("e"),
     sign: Option<Sign>,
     digits: StringOf1<Digit>,
 }
 
-#[derive(Grammar)]
+#[derive(Parse)]
 pub(crate) struct JsonNumber {
     minus: Option<StringEq!("-")>,
     integer: Integer,

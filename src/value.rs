@@ -4,20 +4,20 @@
 
 use std::collections::HashMap;
 
-use tygr::{Grammar, StringEq};
+use tygr::{Parse, StringEq};
 
 use crate::tygr_json::{JsonArray, JsonBool, JsonNumber, JsonObject, JsonString};
 
 /// Also tygr's grammar for a value: each variant converts from its syntax
 /// in `tygr_json`.
-#[derive(Debug, Clone, PartialEq, Grammar)]
+#[derive(Debug, Clone, PartialEq, Parse)]
 pub(crate) enum JsonValue {
-    Object(#[grammar(from = JsonObject)] HashMap<String, JsonValue>),
-    Array(#[grammar(from = JsonArray)] Vec<JsonValue>),
-    Str(#[grammar(from = JsonString)] String),
-    Num(#[grammar(from_str = JsonNumber)] f64),
-    Bool(#[grammar(from = JsonBool)] bool),
-    #[grammar(from = StringEq!("null"))]
+    Object(#[tygr(try_from_infallible = JsonObject)] HashMap<String, JsonValue>),
+    Array(#[tygr(try_from_infallible = JsonArray)] Vec<JsonValue>),
+    Str(#[tygr(try_from_infallible = JsonString)] String),
+    Num(#[tygr(from_str = JsonNumber)] f64),
+    Bool(#[tygr(try_from_infallible = JsonBool)] bool),
+    #[tygr(try_from_infallible = StringEq!("null"))]
     Null,
 }
 

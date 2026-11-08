@@ -123,7 +123,6 @@ dependencies = [
 name = "tygr-derive"
 version = "0.6.2"
 dependencies = [
- "either",
  "proc-macro2",
  "quote",
  "syn 2.0.119",
