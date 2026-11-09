@@ -47,20 +47,20 @@ distribution.
 ## Results
 
 Apple M2, rustc 1.98, LTO, one codegen unit; tygr at its `optimization`
-branch (`91cdd25`), nom 8.0.0, winnow 1.0.5, serde_json 1.0.154.
+branch (`fa5e626`), nom 8.0.0, winnow 1.0.5, serde_json 1.0.154.
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| serde_json | `358 (357–358)` | `675 (673–679)` | `496 (495–497)` |
-| tygr | `449 (448–451)` | `443 (441–445)` | `261 (260–261)` |
-| winnow | `394 (393–395)` | `438 (436–439)` | `219 (218–220)` |
-| nom | `317 (316–317)` | `328 (328–329)` | `199 (198–199)` |
+| serde_json | `353 (352–355)` | `664 (660–666)` | `498 (496–499)` |
+| tygr | `452 (450–453)` | `449 (445–450)` | `260 (259–261)` |
+| winnow | `391 (390–392)` | `438 (436–438)` | `219 (218–219)` |
+| nom | `312 (311–312)` | `325 (325–326)` | `198 (198–199)` |
 
 | vs serde_json, medians | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
 | serde_json | `1.00×` | `1.00×` | `1.00×` |
-| tygr | `1.26×` | `0.66×` | `0.53×` |
-| winnow | `1.10×` | `0.65×` | `0.44×` |
+| tygr | `1.28×` | `0.68×` | `0.52×` |
+| winnow | `1.11×` | `0.66×` | `0.44×` |
 | nom | `0.88×` | `0.49×` | `0.40×` |
 
-tygr is faster than winnow (1.01–1.19×) and nom (1.31–1.42×).
+tygr is faster than winnow (1.03–1.19×) and nom (1.31–1.45×).
