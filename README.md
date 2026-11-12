@@ -98,6 +98,11 @@ bracket, comma, colon and quote, strings split into content runs and escapes,
 and each pair's `key` and `value` named. The one difference: tree-sitter
 splits `\u` from its hex digits, where tygr keeps `\uXXXX` as one escape.
 
+pest's tree keeps less: no delimiters, each string or number as one node
+(the grammar makes them atomic), and a pair's key and value by position, not
+name. It adds a `value` node around every value, and an index of line starts,
+so each span can give its line and column.
+
 Interpret these numbers with more caution than the values benchmark:
 - Error handling differs:
   - tygr and pest reject ill-formed input, whereas tree-sitter recovers from
