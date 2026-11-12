@@ -1,7 +1,8 @@
 //! `tygr_json`'s sibling: the same JSON syntax, kept as a syntax tree, as
-//! tree-sitter and pest keep it. Every atom and delimiter keeps its byte
-//! range and nothing else: it's checked but not decoded. An object's or
-//! array's range runs from its opening to its closing bracket.
+//! tree-sitter and pest keep it. Every token is a leaf that keeps its byte
+//! range and nothing else: it's checked but not decoded. Objects, arrays,
+//! pairs and strings keep no range of their own: each runs from its first
+//! leaf's start to its last leaf's end.
 
 use std::marker::PhantomData;
 
@@ -9,34 +10,50 @@ use tygr::*;
 
 use crate::tygr_json::{Escape, JsonNumber, Unescaped, Ws};
 
-/// An atom's range; its text stays in the input.
-pub(crate) type Atom<G> = Ranged<PhantomData<G>>;
+/// A token's range; its text stays in the input.
+pub(crate) type Leaf<G> = Ranged<PhantomData<G>>;
 
-pub(crate) type Comma = (Ws, Atom<StringEq!(",")>, Ws);
+pub(crate) type Comma = (Ws, Leaf<StringEq!(",")>, Ws);
 
 #[derive(Parse)]
-pub(crate) struct Document(Ws, Node, Ws);
+struct Document(Ws, Node, Ws);
 
 pub(crate) fn parse(input: &str) -> Option<Node> {
     Document::parse(input).ok().map(|document| document.1)
 }
 
+/// Objects and arrays are boxed: their first item isn't behind a `Vec`.
 #[derive(Parse)]
 pub(crate) enum Node {
-    Object(Wrap<(Atom<StringEq!("{")>, Ws), Option<VecSep<Pair, Comma>>, (Ws, Atom<StringEq!("}")>)>),
-    Array(Wrap<(Atom<StringEq!("[")>, Ws), Option<VecSep<Node, Comma>>, (Ws, Atom<StringEq!("]")>)>),
+    Object(
+        Box<
+            Wrap<
+                (Leaf<StringEq!("{")>, Ws),
+                Option<(Pair, Vec<(Comma, Pair)>)>,
+                (Ws, Leaf<StringEq!("}")>),
+            >,
+        >,
+    ),
+    Array(
+        Box<
+            Wrap<
+                (Leaf<StringEq!("[")>, Ws),
+                Option<(Node, Vec<(Comma, Node)>)>,
+                (Ws, Leaf<StringEq!("]")>),
+            >,
+        >,
+    ),
     String(JsonString),
-    Number(Atom<JsonNumber>),
-    True(Atom<StringEq!("true")>),
-    False(Atom<StringEq!("false")>),
-    Null(Atom<StringEq!("null")>),
+    Number(Leaf<JsonNumber>),
+    True(Leaf<StringEq!("true")>),
+    False(Leaf<StringEq!("false")>),
+    Null(Leaf<StringEq!("null")>),
 }
 
-/// Its range runs from its key's start to its value's end.
 #[derive(Parse)]
 pub(crate) struct Pair {
     pub(crate) key: JsonString,
-    pub(crate) colon: (Ws, Atom<StringEq!(":")>, Ws),
+    pub(crate) colon: (Ws, Leaf<StringEq!(":")>, Ws),
     pub(crate) value: Node,
 }
 
@@ -44,13 +61,13 @@ pub(crate) struct Pair {
 /// Unlike tree-sitter, `\uXXXX` is one escape.
 #[derive(Parse)]
 pub(crate) struct JsonString {
-    pub(crate) open: Atom<StringEq!("\"")>,
+    pub(crate) open: Leaf<StringEq!("\"")>,
     pub(crate) parts: Vec<StringPart>,
-    pub(crate) close: Atom<StringEq!("\"")>,
+    pub(crate) close: Leaf<StringEq!("\"")>,
 }
 
 #[derive(Parse)]
 pub(crate) enum StringPart {
-    Content(Atom<StringOf1<Unescaped>>),
-    Escape(Atom<Prefix<StringEq!("\\"), Escape>>),
+    Content(Leaf<StringOf1<Unescaped>>),
+    Escape(Leaf<Prefix<StringEq!("\\"), Escape>>),
 }

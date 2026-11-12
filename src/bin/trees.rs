@@ -15,20 +15,20 @@ use std::cell::RefCell;
 use std::hint::black_box;
 
 use harness::Parser;
-use tygr::{VecSep, Wrap};
-use tygr_json::Ws;
-use tygr_tree::{Atom, Comma};
 use pest::Parser as _;
 use pest::iterators::Pair;
 use pest_grammars::json::{JsonParser, Rule};
+use tygr::Wrap;
+use tygr_json::Ws;
+use tygr_tree::{Comma, Leaf};
 use value::JsonValue;
 
 const PARSERS: [Parser; 3] = [
     (
         if cfg!(feature = "trace_one_node") {
-            "tygr (trace_one_node)"
+            "tygr (trace one node)"
         } else {
-            "tygr"
+            "tygr (no trace)"
         },
         |s| black_box(tygr_tree::parse(s)).is_some(),
         |s| tygr_tree::parse(s).map(|node| tygr_value(&node, s)),
@@ -131,7 +131,7 @@ fn tygr_value(node: &tygr_tree::Node, input: &str) -> JsonValue {
     use tygr_tree::Node;
     match node {
         Node::Object(object) => {
-            let pairs = tygr_items(object, input, "{", "}").iter().map(|pair| {
+            let pairs = tygr_items(object, input, "{", "}").into_iter().map(|pair| {
                 assert_eq!(&input[pair.colon.1.range()], ":");
                 let key = key(tygr_string(&pair.key, input));
                 (key, tygr_value(&pair.value, input))
@@ -139,7 +139,7 @@ fn tygr_value(node: &tygr_tree::Node, input: &str) -> JsonValue {
             JsonValue::Object(pairs.collect())
         }
         Node::Array(array) => {
-            let items = tygr_items(array, input, "[", "]").iter();
+            let items = tygr_items(array, input, "[", "]").into_iter();
             JsonValue::Array(items.map(|item| tygr_value(item, input)).collect())
         }
         Node::String(string) => atom(tygr_string(string, input)),
@@ -174,22 +174,23 @@ fn tygr_string<'a>(string: &tygr_tree::JsonString, input: &'a str) -> &'a str {
 }
 
 /// An object's or array's items, once its delimiters' ranges are checked.
-fn tygr_items<'a, T, Open, Close>(
-    node: &'a Wrap<(Atom<Open>, Ws), Option<VecSep<T, Comma>>, (Ws, Atom<Close>)>,
+fn tygr_items<'a, Open, T, Close>(
+    node: &'a Wrap<(Leaf<Open>, Ws), Option<(T, Vec<(Comma, T)>)>, (Ws, Leaf<Close>)>,
     input: &str,
     open: &str,
     close: &str,
-) -> &'a [T] {
+) -> Vec<&'a T> {
     assert_eq!(&input[node.before.0.range()], open);
     assert_eq!(&input[node.after.1.range()], close);
-    let Some(list) = &node.wrapped else {
-        return &[];
+    let Some((first, rest)) = &node.wrapped else {
+        return Vec::new();
     };
-    assert_eq!(list.seps.len() + 1, list.items.len());
-    for (_, comma, _) in &list.seps {
+    let mut items = vec![first];
+    for ((_, comma, _), item) in rest {
         assert_eq!(&input[comma.range()], ",");
+        items.push(item);
     }
-    &list.items
+    items
 }
 
 fn pest_value(pair: Pair<'_, Rule>) -> JsonValue {

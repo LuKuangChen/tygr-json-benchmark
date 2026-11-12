@@ -26,7 +26,7 @@ pub(crate) type Ws = PhantomData<StringOf<WsChar>>;
 type Comma = (Ws, StringEq!(","), Ws);
 
 #[derive(Parse)]
-pub(crate) struct Json(Ws, JsonValue, Ws);
+struct Json(Ws, JsonValue, Ws);
 
 pub(crate) fn parse(input: &str) -> Option<JsonValue> {
     Json::parse(input).ok().map(|json| json.1)
@@ -34,7 +34,11 @@ pub(crate) fn parse(input: &str) -> Option<JsonValue> {
 
 #[derive(Parse)]
 pub(crate) struct JsonObject(
-    Wrap<(StringEq!("{"), Ws), Option<VecSep<JsonMember, Comma>>, (Ws, StringEq!("}"))>,
+    Wrap<
+        (StringEq!("{"), Ws),
+        Option<(JsonMember, Vec<(Comma, JsonMember)>)>,
+        (Ws, StringEq!("}")),
+    >,
 );
 
 #[derive(Parse)]
@@ -47,27 +51,26 @@ pub(crate) struct JsonMember {
 
 impl From<JsonObject> for HashMap<String, JsonValue> {
     fn from(object: JsonObject) -> Self {
-        let members = object.0.into_inner().map(|members| members.items);
-        members
-            .into_iter()
-            .flatten()
-            .map(|m| (m.key, m.value))
-            .collect()
+        let members = object.0.into_inner().into_iter().flat_map(|(first, rest)| {
+            std::iter::once(first).chain(rest.into_iter().map(|(_, member)| member))
+        });
+        members.map(|m| (m.key, m.value)).collect()
     }
 }
 
 #[derive(Parse)]
 pub(crate) struct JsonArray(
-    Wrap<(StringEq!("["), Ws), Option<VecSep<JsonValue, Comma>>, (Ws, StringEq!("]"))>,
+    Wrap<(StringEq!("["), Ws), Option<(JsonValue, Vec<(Comma, JsonValue)>)>, (Ws, StringEq!("]"))>,
 );
 
 impl From<JsonArray> for Vec<JsonValue> {
     fn from(array: JsonArray) -> Self {
-        array
-            .0
-            .into_inner()
-            .map(|elements| elements.items)
-            .unwrap_or_default()
+        let Some((first, rest)) = array.0.into_inner() else {
+            return Vec::new();
+        };
+        std::iter::once(first)
+            .chain(rest.into_iter().map(|(_, item)| item))
+            .collect()
     }
 }
 

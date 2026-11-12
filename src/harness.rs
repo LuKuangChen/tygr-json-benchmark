@@ -19,7 +19,7 @@ pub(crate) type Parser = (
 );
 
 /// Timed runs per parser and file. Of 100 sorted runs, the 40th and 61st
-/// bound a 95% confidence interval for the median, assuming no distribution.
+/// bound a 95% confidence interval for the median, by the sign test.
 const RUNS: usize = 100;
 
 /// Check every parser against serde_json on `samples` and the files, then
