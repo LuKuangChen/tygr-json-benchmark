@@ -2,7 +2,7 @@
 
 JSON throughput of [tygr](https://github.com/intersystems-community/tygr)
 against other Rust parsers, in two benchmarks: building a JSON value, and
-building a syntax tree. Both run on the
+building a tree of source ranges. Both run on the
 [serde-rs/json-benchmark](https://github.com/serde-rs/json-benchmark) corpus.
 serde_json's parser is written by hand, as fast parsers usually are, so it is
 the baseline for values, and the inputs are the ones its own benchmark uses:
@@ -77,23 +77,26 @@ branch (`5a3bd8f`), nom 8.0.0, winnow 1.0.5, serde_json 1.0.154.
 
 tygr is faster than winnow (1.01–1.19×) and nom (1.32–1.34×).
 
-## Syntax trees
+## Trees of Ranges
 
-Parsers like tree-sitter and pest build no value: they build a syntax tree
-whose nodes are byte ranges into the input, leaving atoms undecoded.
+Parsers like tree-sitter and pest don't build a value ready for consumption on their own, rather, they build a tree
+of byte ranges into the input. The trees provide rich structural information about the input, don't retain all information about it.
 This benchmark compares them with a sibling tygr grammar that does
 the same:
 - tree-sitter: [tree-sitter-json](https://github.com/tree-sitter/tree-sitter-json)'s
-  grammar. Every node, punctuation included, has a range, and strings have
-  content and escape nodes. Its numbers take no `+` in the exponent
-  (none of the files has one), and a tree with error nodes counts as a
-  failure.
+  grammar. Its grammar is adapted to add support for `+` in the exponent and remove support for comments. 
+  Tree with error nodes counts as failure.
 - tygr: [`src/tygr_tree.rs`](src/tygr_tree.rs), `tygr_json`'s tokens, with
   objects and arrays kept as `Ranged`, and atoms as
   `Ranged<PhantomData<_>>`: checked, not decoded.
 - pest: [pest_grammars](https://github.com/pest-parser/pest/blob/master/grammars/src/grammars/json.pest)'
-  JSON grammar, whose `Pairs` give each rule's span. Its error tracking
-  can't be turned off.
+  JSON grammar, whose `Pairs` give each rule's span.
+
+This comparison worths more caution when interpreting the performance numbers:
+- The error handling mechanism is different:
+  - tygr and pest don't tolerate ill-formed inputs, whereas tree-sitter does with error nodes;
+  - tygr's error tracking can be turned off, whereas pest's can't;
+- Some systems store additional information. For example, tree-sitter stores extra for the purpose of incremental parsing.
 
 Each tree is checked by converting it to the shared `JsonValue`, with
 atoms decoded by serde_json.
@@ -114,9 +117,3 @@ tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest 2.9.6:
 
 tygr is faster than tree-sitter (18–23×) and pest (6.5–11×).
 
-This measures one thing: a parse from scratch into a syntax tree. tree-sitter
-is built for more than that, and pays for it on every parse. It reparses
-incrementally after an edit, recovers from syntax errors, and keeps row and
-column positions and punctuation nodes. These numbers don't show what that's
-worth. Where files are reparsed often after small edits, as in an editor,
-measure that case with tree-sitter's own tools.
