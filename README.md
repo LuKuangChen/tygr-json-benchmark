@@ -24,8 +24,7 @@ parentheses, a 95% confidence interval for it: the 40th and 61st of the
 sorted speeds. This interval comes from the sign test, which assumes nothing
 about how speeds are distributed. [`src/harness.rs`](src/harness.rs) has the
 check, the timing and the tables. All numbers are from an Apple M2, with
-rustc 1.98, LTO and one codegen unit, and tygr at its `optimization` branch
-(`a4f9360`).
+rustc 1.98, LTO and one codegen unit, and tygr 0.7.0.
 
 ## Values
 
@@ -64,10 +63,10 @@ serde_json 1.0.154, winnow 1.0.5, nom 8.0.0:
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| serde_json | `357 (356–358)` | `668 (663–672)` | `498 (496–500)` |
-| tygr | `324 (323–325)` | `414 (411–414)` | `256 (255–257)` |
-| winnow | `389 (387–390)` | `435 (433–436)` | `220 (218–220)` |
-| nom | `313 (313–314)` | `328 (327–329)` | `199 (198–199)` |
+| serde_json | `357 (356–358)` | `672 (669–675)` | `495 (494–496)` |
+| tygr | `325 (324–325)` | `416 (413–418)` | `254 (253–255)` |
+| winnow | `390 (389–390)` | `434 (433–436)` | `219 (218–220)` |
+| nom | `313 (313–314)` | `327 (326–329)` | `198 (197–199)` |
 
 | vs serde_json, medians | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
@@ -129,7 +128,7 @@ trace-one-node row is from a second run, with the `trace_one_node` feature:
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| tygr (no trace) | `352 (350–353)` | `501 (498–503)` | `405 (403–408)` |
-| tygr (trace one node) | `270 (269–271)` | `355 (353–357)` | `316 (314–317)` |
-| tree-sitter | `28 (28–28)` | `48 (47–48)` | `37 (37–37)` |
-| pest | `80 (79–81)` | `94 (93–95)` | `74 (72–74)` |
+| tygr (no trace) | `351 (348–354)` | `497 (490–501)` | `404 (399–407)` |
+| tygr (trace one node) | `272 (271–272)` | `353 (351–354)` | `316 (314–317)` |
+| tree-sitter | `28 (28–28)` | `47 (47–47)` | `37 (36–37)` |
+| pest | `79 (77–80)` | `90 (89–93)` | `71 (71–72)` |
