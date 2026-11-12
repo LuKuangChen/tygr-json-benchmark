@@ -82,16 +82,17 @@ tygr ties winnow on citm_catalog and is faster on canada and twitter
 
 Parsers like tree-sitter and pest don't build a value ready for use on
 their own. Rather, they build a tree of byte ranges into the input: rich in
-structure, but not decoded. This benchmark compares them with a sibling tygr
-grammar that does the same:
-- tygr: [`src/tygr_tree.rs`](src/tygr_tree.rs), `tygr_json`'s tokens, each
-  kept as `Ranged<PhantomData<_>>`: checked, not decoded.
+structure, but not decoded. Each system here builds one from a JSON grammar:
+- tygr: [`src/tygr_tree.rs`](src/tygr_tree.rs), reusing `tygr_json`'s
+  tokens. Its tree is typed: an enum per value, a struct per pair or string,
+  and a `Ranged<PhantomData<_>>` per token, which keeps the token's byte
+  range and checks it without decoding it.
 - tree-sitter: [tree-sitter-json](https://github.com/tree-sitter/tree-sitter-json)'s
-  grammar, unchanged. It differs from JSON in ways the corpus doesn't
-  exercise: it accepts comments, any number of top-level values and any
-  whitespace, and rejects `+` in exponents, so its samples use `-2.5e3`.
+  grammar, unchanged. Its tree's nodes are untyped: each has a kind and a
+  byte range.
 - pest: [pest_grammars](https://github.com/pest-parser/pest/blob/master/grammars/src/grammars/json.pest)'
-  JSON grammar, whose `Pairs` give each rule's span.
+  JSON grammar. Its `Pairs` give each rule it matched with its byte range,
+  nested as the rules nest.
 
 tygr's and tree-sitter's trees have the same shape: a range for every
 bracket, comma, colon and quote, strings split into content runs and escapes,
@@ -104,6 +105,9 @@ name. It adds a `value` node around every value, and an index of line starts,
 so each span can give its line and column.
 
 Interpret these numbers with more caution than the values benchmark:
+- tree-sitter-json's grammar differs from JSON in ways the corpus doesn't
+  exercise: it accepts comments, any number of top-level values and any
+  whitespace, and rejects `+` in exponents, so its samples use `-2.5e3`.
 - Error handling differs:
   - tygr and pest reject ill-formed input, whereas tree-sitter recovers from
     it with error nodes;
