@@ -3,7 +3,8 @@
 JSON throughput of [tygr](https://github.com/intersystems-community/tygr)
 against other Rust parsers on the
 [serde-rs/json-benchmark](https://github.com/serde-rs/json-benchmark) corpus.
-The benchmark uses these three inputs:
+serde_json is the baseline: its parser is written by hand, as fast parsers
+usually are, so the inputs are the ones serde_json's own benchmark uses:
 - [canada.json](https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/canada.json)
 - [citm_catalog.json](https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/citm_catalog.json)
 - [twitter.json](https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json)
@@ -36,7 +37,8 @@ Minimal error-tracking setup:
 - nom: `Check`
 
 ```sh
-cargo run --release
+cargo run --release              # values
+cargo run --release --bin trees  # syntax trees
 ```
 
 Each parser runs 100 times per file, interleaved with the others so drift
@@ -47,20 +49,58 @@ distribution.
 ## Results
 
 Apple M2, rustc 1.98, LTO, one codegen unit; tygr at its `optimization`
-branch (`fa5e626`), nom 8.0.0, winnow 1.0.5, serde_json 1.0.154.
+branch (`5a3bd8f`), nom 8.0.0, winnow 1.0.5, serde_json 1.0.154.
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| serde_json | `353 (352–355)` | `664 (660–666)` | `498 (496–499)` |
-| tygr | `452 (450–453)` | `449 (445–450)` | `260 (259–261)` |
-| winnow | `391 (390–392)` | `438 (436–438)` | `219 (218–219)` |
-| nom | `312 (311–312)` | `325 (325–326)` | `198 (198–199)` |
+| serde_json | `358 (358–359)` | `683 (680–689)` | `502 (501–503)` |
+| tygr | `427 (426–428)` | `445 (444–446)` | `262 (261–262)` |
+| winnow | `395 (394–396)` | `439 (437–440)` | `220 (219–220)` |
+| nom | `318 (317–318)` | `333 (332–333)` | `199 (198–200)` |
 
 | vs serde_json, medians | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
 | serde_json | `1.00×` | `1.00×` | `1.00×` |
-| tygr | `1.28×` | `0.68×` | `0.52×` |
-| winnow | `1.11×` | `0.66×` | `0.44×` |
-| nom | `0.88×` | `0.49×` | `0.40×` |
+| tygr | `1.19×` | `0.65×` | `0.52×` |
+| winnow | `1.10×` | `0.64×` | `0.44×` |
+| nom | `0.89×` | `0.49×` | `0.40×` |
 
-tygr is faster than winnow (1.03–1.19×) and nom (1.31–1.45×).
+tygr is faster than winnow (1.01–1.19×) and nom (1.32–1.34×).
+
+## Syntax trees
+
+Parsers like tree-sitter and pest build no value: they build a syntax tree
+whose nodes are byte ranges into the input, leaving atoms undecoded.
+The second benchmark compares them with a sibling tygr grammar that does
+the same:
+- tree-sitter: [tree-sitter-json](https://github.com/tree-sitter/tree-sitter-json)'s
+  grammar. Every node, punctuation included, has a range, and strings have
+  content and escape nodes. Its numbers take no `+` in the exponent
+  (none of the files has one), and a tree with error nodes counts as a
+  failure.
+- tygr: [`src/tygr_tree.rs`](src/tygr_tree.rs), `tygr_json`'s tokens, with
+  objects and arrays kept as `Ranged`, and atoms as
+  `Ranged<PhantomData<_>>`: checked, not decoded.
+- pest: [pest_grammars](https://github.com/pest-parser/pest/blob/master/grammars/src/grammars/json.pest)'
+  JSON grammar, whose `Pairs` give each rule's span. Its error tracking
+  can't be turned off.
+
+Each tree is checked by converting it to the shared `JsonValue`, with
+atoms decoded by serde_json, outside the timing. The benchmark is its own
+binary, so tygr's two grammars share no compiled code.
+
+tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest 2.9.6:
+
+| MB/s, median (95% CI) | canada | citm_catalog | twitter |
+|---|---:|---:|---:|
+| tree-sitter | `29 (29–29)` | `48 (48–48)` | `37 (37–37)` |
+| tygr | `531 (526–533)` | `938 (934–939)` | `849 (845–853)` |
+| pest | `82 (81–82)` | `95 (94–96)` | `75 (74–75)` |
+
+| vs tree-sitter, medians | canada | citm_catalog | twitter |
+|---|---:|---:|---:|
+| tree-sitter | `1.00×` | `1.00×` | `1.00×` |
+| tygr | `18.14×` | `19.46×` | `22.70×` |
+| pest | `2.79×` | `1.98×` | `1.99×` |
+
+tygr is faster than tree-sitter (18–23×) and pest (6.5–11×).
