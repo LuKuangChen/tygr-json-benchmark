@@ -114,27 +114,12 @@ Each tree is checked by converting it to the shared `JsonValue`, with atoms
 decoded by serde_json, and tygr's delimiter and string-part ranges checked to
 tile the input.
 
-tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest 2.9.6:
+tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest 2.9.6. The
+`trace_one_node` row is from a second run, with that feature:
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| tree-sitter | `29 (29–29)` | `48 (48–48)` | `37 (37–37)` |
 | tygr | `373 (370–375)` | `515 (511–520)` | `390 (385–393)` |
-| pest | `81 (81–82)` | `94 (94–95)` | `74 (74–74)` |
-
-| vs tree-sitter, medians | canada | citm_catalog | twitter |
-|---|---:|---:|---:|
-| tree-sitter | `1.00×` | `1.00×` | `1.00×` |
-| tygr | `12.94×` | `10.78×` | `10.46×` |
-| pest | `2.82×` | `1.97×` | `1.99×` |
-
-With `--features trace_one_node`:
-
-| MB/s, median (95% CI) | canada | citm_catalog | twitter |
-|---|---:|---:|---:|
-| tree-sitter | `29 (29–29)` | `48 (48–48)` | `37 (37–37)` |
 | tygr (trace_one_node) | `272 (270–274)` | `392 (390–396)` | `310 (309–312)` |
-| pest | `81 (81–82)` | `91 (90–92)` | `71 (70–72)` |
-
-tygr is faster than tree-sitter (10–13×, or 8.2–9.4× tracing) and pest (4.6–5.5×,
-or 3.4–4.4× tracing).
+| tree-sitter | `29 (29–29)` | `48 (48–48)` | `37 (37–37)` |
+| pest | `81 (81–82)` | `94 (94–95)` | `74 (74–74)` |

@@ -1,4 +1,4 @@
-//! Syntax-tree throughput of tree-sitter, tygr and pest; see the README.
+//! Syntax-tree throughput of tygr, tree-sitter and pest; see the README.
 //! Its own binary, so tygr's two grammars share no compiled code.
 
 #[path = "../harness.rs"]
@@ -25,11 +25,6 @@ use value::JsonValue;
 
 const PARSERS: [Parser; 3] = [
     (
-        "tree-sitter",
-        |s| black_box(tree_sitter_parse(s)).is_some(),
-        |s| tree_sitter_parse(s).map(|tree| tree_sitter_value(tree.root_node(), s)),
-    ),
-    (
         if cfg!(feature = "trace_one_node") {
             "tygr (trace_one_node)"
         } else {
@@ -37,6 +32,11 @@ const PARSERS: [Parser; 3] = [
         },
         |s| black_box(tygr_tree::parse(s)).is_some(),
         |s| tygr_tree::parse(s).map(|node| tygr_value(&node, s)),
+    ),
+    (
+        "tree-sitter",
+        |s| black_box(tree_sitter_parse(s)).is_some(),
+        |s| tree_sitter_parse(s).map(|tree| tree_sitter_value(tree.root_node(), s)),
     ),
     (
         "pest",
