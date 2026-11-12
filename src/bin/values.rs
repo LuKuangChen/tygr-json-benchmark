@@ -1,9 +1,14 @@
 //! JSON parse throughput of serde_json, tygr, winnow and nom; see the README.
 
+#[path = "../harness.rs"]
 mod harness;
+#[path = "../nom_json.rs"]
 mod nom_json;
+#[path = "../tygr_json.rs"]
 mod tygr_json;
+#[path = "../value.rs"]
 mod value;
+#[path = "../winnow_json.rs"]
 mod winnow_json;
 
 use std::hint::black_box;

@@ -3,7 +3,6 @@ name = "tygr-json-benchmark"
 version = "0.1.0"
 edition = "2024"
 publish = false
-default-run = "tygr-json-benchmark"
 
 [dependencies]
 nom = "8"

@@ -1,15 +1,37 @@
 # tygr-json-benchmark
 
 JSON throughput of [tygr](https://github.com/intersystems-community/tygr)
-against other Rust parsers on the
+against other Rust parsers, in two benchmarks: building a JSON value, and
+building a syntax tree. Both run on the
 [serde-rs/json-benchmark](https://github.com/serde-rs/json-benchmark) corpus.
-serde_json is the baseline: its parser is written by hand, as fast parsers
-usually are, so the inputs are the ones serde_json's own benchmark uses:
+serde_json's parser is written by hand, as fast parsers usually are, so it is
+the baseline for values, and the inputs are the ones its own benchmark uses:
 - [canada.json](https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/canada.json)
 - [citm_catalog.json](https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/citm_catalog.json)
 - [twitter.json](https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json)
 
-The benchmark compares the lowest-cost error-tracking mode each parser exposes,
+```sh
+cargo run --release --bin values
+cargo run --release --bin trees
+```
+
+Each benchmark is its own binary, so no parser shares compiled code with one
+it isn't compared against. Both first check every parser's output against
+serde_json's value, on the files and on a few samples. Then each parser runs
+100 times per file, interleaved with the others so drift affects them all
+alike. The tables give the median and a 95% confidence interval for it: the
+40th and 61st of the sorted times, which assumes no distribution.
+
+Layout:
+- [`src/bin/values.rs`](src/bin/values.rs), [`src/bin/trees.rs`](src/bin/trees.rs): the two benchmarks
+- [`src/harness.rs`](src/harness.rs): the check, the timing and the tables they share
+- [`src/value.rs`](src/value.rs): the shared `JsonValue`, also tygr's value grammar
+- [`src/tygr_json.rs`](src/tygr_json.rs), [`src/tygr_tree.rs`](src/tygr_tree.rs): tygr's two grammars
+- [`src/winnow_json.rs`](src/winnow_json.rs), [`src/nom_json.rs`](src/nom_json.rs): the upstream winnow and nom parsers
+
+## Values
+
+This benchmark compares the lowest-cost error-tracking mode each parser exposes,
 while still checking that the parsed values match a shared JSON shape.
 
 Competitors build a JSON value with escapes decoded and numbers as correctly
@@ -36,18 +58,6 @@ Minimal error-tracking setup:
 - winnow: `EmptyError`
 - nom: `Check`
 
-```sh
-cargo run --release              # values
-cargo run --release --bin trees  # syntax trees
-```
-
-Each parser runs 100 times per file, interleaved with the others so drift
-affects them all alike. The tables give the median and a 95% confidence
-interval for it: the 40th and 61st of the sorted times, which assumes no
-distribution.
-
-## Results
-
 Apple M2, rustc 1.98, LTO, one codegen unit; tygr at its `optimization`
 branch (`5a3bd8f`), nom 8.0.0, winnow 1.0.5, serde_json 1.0.154.
 
@@ -71,7 +81,7 @@ tygr is faster than winnow (1.01–1.19×) and nom (1.32–1.34×).
 
 Parsers like tree-sitter and pest build no value: they build a syntax tree
 whose nodes are byte ranges into the input, leaving atoms undecoded.
-The second benchmark compares them with a sibling tygr grammar that does
+This benchmark compares them with a sibling tygr grammar that does
 the same:
 - tree-sitter: [tree-sitter-json](https://github.com/tree-sitter/tree-sitter-json)'s
   grammar. Every node, punctuation included, has a range, and strings have
@@ -86,8 +96,7 @@ the same:
   can't be turned off.
 
 Each tree is checked by converting it to the shared `JsonValue`, with
-atoms decoded by serde_json, outside the timing. The benchmark is its own
-binary, so tygr's two grammars share no compiled code.
+atoms decoded by serde_json.
 
 tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest 2.9.6:
 

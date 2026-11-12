@@ -1,6 +1,6 @@
 //! The JSON value tygr, nom and winnow build, in the shape of nom's and
-//! winnow's own `JsonValue`; serde_json's `Value` is converted to it only
-//! for checking.
+//! winnow's own `JsonValue`. serde_json's `Value` and the syntax trees are
+//! converted to it only for checking.
 
 use std::collections::HashMap;
 
