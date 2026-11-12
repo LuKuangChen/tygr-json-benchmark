@@ -104,3 +104,10 @@ tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest 2.9.6:
 | pest | `2.79×` | `1.98×` | `1.99×` |
 
 tygr is faster than tree-sitter (18–23×) and pest (6.5–11×).
+
+This measures one thing: a parse from scratch into a syntax tree. tree-sitter
+is built for more than that, and pays for it on every parse. It reparses
+incrementally after an edit, recovers from syntax errors, and keeps row and
+column positions and punctuation nodes. These numbers don't show what that's
+worth. Where files are reparsed often after small edits, as in an editor,
+measure that case with tree-sitter's own tools.
