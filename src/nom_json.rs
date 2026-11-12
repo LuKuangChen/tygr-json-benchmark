@@ -1,9 +1,8 @@
-//! nom's own JSON parser, from its `benchmarks/benches/json.rs` (nom 8,
-//! MIT), minus the bench harness, and building the shared `JsonValue`
-//! (`src/value.rs`, the same shape) in place of its own copy. Kept in nom's
-//! formatting.
+//! nom's own JSON parser, from its `benchmarks/benches/json.rs` at
+//! `51c3c4e` (nom 8, MIT; see `NOTICE`), minus the bench harness, and
+//! building the shared `JsonValue` (`src/value.rs`, the same shape) in place
+//! of its own copy. Kept in nom's formatting.
 
-#![allow(dead_code)]
 #![cfg_attr(rustfmt, rustfmt::skip)]
 
 use nom::{

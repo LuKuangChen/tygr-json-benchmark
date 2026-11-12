@@ -380,7 +380,6 @@ dependencies = [
  "nom",
  "pest",
  "pest_grammars",
- "serde",
  "serde_json",
  "tree-sitter",
  "tree-sitter-json",

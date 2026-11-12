@@ -1,7 +1,8 @@
-//! winnow's own JSON example (winnow 1, MIT): the parser from
-//! `examples/json/parser_dispatch.rs`, unchanged except that it builds the
-//! shared `JsonValue` (`src/value.rs`, the same shape as its `json.rs`, with
-//! `Bool` for `Boolean`).
+//! winnow's own JSON example (winnow 1, MIT; see `NOTICE`): the parser from
+//! `examples/json/parser_dispatch.rs` at `21b3ab2`, unchanged except that it
+//! builds the shared `JsonValue` (`src/value.rs`, the same shape as its
+//! `json.rs`, with `Bool` for `Boolean`), leaves out the tests, and adds
+//! `parse`.
 
 use std::collections::HashMap;
 use std::str;

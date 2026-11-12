@@ -47,8 +47,9 @@ const PARSERS: [Parser; 3] = [
 
 /// As in the values benchmark, but tree-sitter-json's numbers take no `+`
 /// in the exponent: `-2.5e+3` is `-2.5e3` here.
-const SAMPLES: [&str; 8] = [
+const SAMPLES: [&str; 9] = [
     "0",
+    r#"{"a": 1, "b": 2, "a": 3}"#,
     " [ ] ",
     r#"{"a": [1, -2.5e3, true, false, null], "b": {}}"#,
     r#""\"\\\/\b\f\n\r\t\u00e9 é""#,

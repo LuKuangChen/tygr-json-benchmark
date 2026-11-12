@@ -13,6 +13,7 @@ both benchmarks use its corpus, from
 ```sh
 cargo run --release --bin values
 cargo run --release --bin trees
+cargo run --release --bin trees --features trace_one_node
 ```
 
 Each benchmark is a separate binary, so the parsers in one can't change how
@@ -48,9 +49,9 @@ The parsers:
   value is converted for the check in [`src/value.rs`](src/value.rs).
 - tygr: [`src/tygr_json.rs`](src/tygr_json.rs).
 - winnow: [`src/winnow_json.rs`](src/winnow_json.rs), adapted from
-  [winnow's example](https://github.com/winnow-rs/winnow/blob/main/examples/json/parser_dispatch.rs).
+  [winnow's example](https://github.com/winnow-rs/winnow/blob/21b3ab2535a675768a170a851efda83253b9eb21/examples/json/parser_dispatch.rs).
 - nom: [`src/nom_json.rs`](src/nom_json.rs), adapted from
-  [nom's benchmark](https://github.com/rust-bakery/nom/blob/master/benchmarks/benches/json.rs).
+  [nom's benchmark](https://github.com/rust-bakery/nom/blob/51c3c4e44fa78a8a09b413419372b97b2cc2a787/benchmarks/benches/json.rs).
 
 Their error tracking, set to the least each offers:
 - serde_json: the default; it builds detailed errors only on failure.
@@ -58,6 +59,16 @@ Their error tracking, set to the least each offers:
   `trace_one_node`.
 - winnow: `EmptyError`.
 - nom: `Check`.
+
+tygr follows [json.org](https://www.json.org)'s grammar exactly. The others
+depart from it in ways the corpus doesn't use, all listed in
+[`CONFORMANCE.md`](CONFORMANCE.md). Some change how much a parser checks:
+- serde_json checks more: it limits nesting to 127 levels, which guards the
+  stack (tygr, winnow and nom have no such guard), and rejects numbers
+  beyond `f64`'s range.
+- winnow and nom check less: they let raw control characters into strings.
+  Their number parsers also accept forms JSON doesn't, such as `+1` and
+  `01`.
 
 serde_json 1.0.154, winnow 1.0.5, nom 8.0.0:
 
@@ -110,12 +121,16 @@ Read these numbers with more care than the values benchmark's:
     error nodes.
   - pest always records where parsing failed. tygr does this with its
     `trace_one_node` feature, which is on by default but off here. The
-    second tygr row has it on
-    (`cargo run --release --bin trees --features trace_one_node`).
-- Grammars differ: tree-sitter-json's accepts more than JSON (comments, any
-  number of top-level values, vertical tabs and form feeds as whitespace,
-  raw control characters in strings, `1.`, and `\u` without hex digits) but
-  rejects `+` in exponents. The corpus uses none of these.
+    second tygr row has it on.
+- Safety differs: pest checks the remaining stack on every rule, so input
+  nested too deeply fails with an error. tygr has no such check, and input
+  nested deeply enough overflows the stack. pest's check comes with its
+  default `std` feature, and pest_grammars turns it on too; built without
+  `std`, pest's JSON grammar ran about 50% faster here.
+- Grammars differ: tygr and pest follow json.org's grammar exactly.
+  tree-sitter-json's accepts more, such as comments between any two tokens,
+  which its lexer has to look for. [`CONFORMANCE.md`](CONFORMANCE.md) lists
+  every difference; the corpus uses none of them.
 
 Each tree is checked by turning it into the shared
 [`JsonValue`](src/value.rs), with serde_json decoding its strings, numbers,
@@ -123,7 +138,8 @@ Each tree is checked by turning it into the shared
 delimiter's text, and that each string's parts cover it end to end, with no
 gaps.
 
-tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest 2.9.6. The
+tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest and pest_grammars
+2.9.6. The
 trace-one-node row is from a second run, with the `trace_one_node` feature:
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
@@ -132,3 +148,6 @@ trace-one-node row is from a second run, with the `trace_one_node` feature:
 | tygr (trace one node) | `272 (271–272)` | `353 (351–354)` | `316 (314–317)` |
 | tree-sitter | `28 (28–28)` | `47 (47–47)` | `37 (36–37)` |
 | pest | `79 (77–80)` | `90 (89–93)` | `71 (71–72)` |
+
+pest has slowed down over its releases: on this machine, with the same
+grammar, pest 2.1.3 parsed the corpus at 395–663 MB/s.

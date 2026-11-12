@@ -8,7 +8,6 @@ publish = false
 nom = "8"
 pest = "2"
 pest_grammars = "2"
-serde = "1"
 serde_json = { version = "1", features = ["float_roundtrip"] }
 tree-sitter = "0.27"
 tree-sitter-json = "0.24"
