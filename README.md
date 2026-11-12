@@ -88,35 +88,32 @@ structure, but not decoded. Each system here builds one from a JSON grammar:
   and a `Ranged<PhantomData<_>>` per token, which keeps the token's byte
   range and checks it without decoding it.
 - tree-sitter: [tree-sitter-json](https://github.com/tree-sitter/tree-sitter-json)'s
-  grammar, unchanged. Its tree's nodes are untyped: each has a kind and a
-  byte range.
+  grammar, unchanged. Its nodes all share one type, `Node`: each has a kind
+  and a byte range.
 - pest: [pest_grammars](https://github.com/pest-parser/pest/blob/master/grammars/src/grammars/json.pest)'
   JSON grammar. Its `Pairs` give each rule it matched with its byte range,
   nested as the rules nest.
 
-tygr's and tree-sitter's trees have the same shape: a range for every
-bracket, comma, colon and quote, strings split into content runs and escapes,
-and each pair's `key` and `value` named. The one difference: tree-sitter
-splits `\u` from its hex digits, where tygr keeps `\uXXXX` as one escape.
-
-pest's tree keeps less: no delimiters, each string or number as one node
-(the grammar makes them atomic), and a pair's key and value by position, not
-name. It adds a `value` node around every value, and an index of line starts,
-so each span can give its line and column.
-
 Interpret these numbers with more caution than the values benchmark:
-- tree-sitter-json's grammar differs from JSON in ways the corpus doesn't
-  exercise: it accepts comments, any number of top-level values and any
-  whitespace, and rejects `+` in exponents, so its samples use `-2.5e3`.
+- Grammars differ:
+  - tree-sitter-json's grammar differs from JSON in ways the corpus doesn't
+    exercise: it accepts comments, any number of top-level values and any
+    whitespace, and rejects `+` in exponents, so its samples use `-2.5e3`.
+- Output differs:
+  - tree-sitter splits `\u` from its hex digits, where tygr keeps `\uXXXX`
+    as one escape, as [json.org](https://www.json.org)'s grammar does.
+  - pest's tree keeps no delimiters, each string or number as one node, and
+    a pair's key and value by position, not name.
+  - tree-sitter computes every node's row and column, and pest indexes line
+    starts so any span's line and column can be looked up.
+  - tree-sitter also keeps what it needs to reuse subtrees. Reparsing after
+    an edit, what it's designed for, isn't measured here.
 - Error handling differs:
   - tygr and pest reject ill-formed input, whereas tree-sitter recovers from
     it with error nodes;
   - pest always records where it failed. tygr does so with its default
     `trace_one_node` feature, measured in a second run below
     (`cargo run --release --bin trees --features trace_one_node`).
-- tree-sitter keeps more, for incremental reparsing: rows and columns, and
-  what it needs to reuse subtrees. Reparsing after an edit, its strength,
-  isn't measured here.
 
 Each tree is checked by converting it to the shared `JsonValue`, with atoms
 decoded by serde_json, and tygr's delimiter and string-part ranges checked to
