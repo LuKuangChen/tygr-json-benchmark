@@ -87,10 +87,9 @@ grammar that does the same:
 - tygr: [`src/tygr_tree.rs`](src/tygr_tree.rs), `tygr_json`'s tokens, each
   kept as `Ranged<PhantomData<_>>`: checked, not decoded.
 - tree-sitter: [tree-sitter-json](https://github.com/tree-sitter/tree-sitter-json)'s
-  grammar, unchanged. A tree with error nodes counts as a failure. The grammar
-  differs from JSON in ways the corpus doesn't exercise: it accepts comments,
-  any number of top-level values and any whitespace, and rejects `+` in
-  exponents, so its samples use `-2.5e3`.
+  grammar, unchanged. It differs from JSON in ways the corpus doesn't
+  exercise: it accepts comments, any number of top-level values and any
+  whitespace, and rejects `+` in exponents, so its samples use `-2.5e3`.
 - pest: [pest_grammars](https://github.com/pest-parser/pest/blob/master/grammars/src/grammars/json.pest)'
   JSON grammar, whose `Pairs` give each rule's span.
 
