@@ -75,45 +75,66 @@ branch (`5a3bd8f`), nom 8.0.0, winnow 1.0.5, serde_json 1.0.154.
 | winnow | `1.10×` | `0.64×` | `0.44×` |
 | nom | `0.89×` | `0.49×` | `0.40×` |
 
-tygr is faster than winnow (1.01–1.19×) and nom (1.32–1.34×).
+tygr ties winnow on citm_catalog and is faster on canada and twitter
+(1.08×, 1.19×). It is faster than nom on all three (1.32–1.34×).
 
 ## Trees of Ranges
 
-Parsers like tree-sitter and pest don't build a value ready for consumption on their own, rather, they build a tree
-of byte ranges into the input. The trees provide rich structural information about the input, don't retain all information about it.
-This benchmark compares them with a sibling tygr grammar that does
-the same:
+Parsers like tree-sitter and pest don't build a value ready for use on
+their own. Rather, they build a tree of byte ranges into the input: rich in
+structure, but not decoded. This benchmark compares them with a sibling tygr
+grammar that does the same:
 - tree-sitter: [tree-sitter-json](https://github.com/tree-sitter/tree-sitter-json)'s
-  grammar. Its grammar is adapted to add support for `+` in the exponent and remove support for comments. 
-  Tree with error nodes counts as failure.
-- tygr: [`src/tygr_tree.rs`](src/tygr_tree.rs), `tygr_json`'s tokens, with
-  objects and arrays kept as `Ranged`, and atoms as
-  `Ranged<PhantomData<_>>`: checked, not decoded.
+  grammar, unchanged. A tree with error nodes counts as a failure. The grammar
+  differs from JSON in ways the corpus doesn't exercise: it accepts comments,
+  any number of top-level values and any whitespace, and rejects `+` in
+  exponents, so its samples use `-2.5e3`. Its tree keeps a node for every
+  bracket, comma, colon and quote, splits strings into content and escape
+  nodes, and names each pair's `key` and `value`.
+- tygr: [`src/tygr_tree.rs`](src/tygr_tree.rs), `tygr_json`'s tokens, kept
+  as `Ranged<PhantomData<_>>`: checked, not decoded. Like tree-sitter's, its
+  tree keeps every delimiter's range, and splits strings into quotes,
+  content runs and escapes (one per escape, where tree-sitter splits `\u`
+  from its hex digits).
 - pest: [pest_grammars](https://github.com/pest-parser/pest/blob/master/grammars/src/grammars/json.pest)'
   JSON grammar, whose `Pairs` give each rule's span.
 
-This comparison worths more caution when interpreting the performance numbers:
-- The error handling mechanism is different:
-  - tygr and pest don't tolerate ill-formed inputs, whereas tree-sitter does with error nodes;
-  - tygr's error tracking can be turned off, whereas pest's can't;
-- Some systems store additional information. For example, tree-sitter stores extra for the purpose of incremental parsing.
+Interpret these numbers with more caution than the values benchmark:
+- Error handling differs:
+  - tygr and pest reject ill-formed input, whereas tree-sitter recovers from
+    it with error nodes;
+  - pest always records where it failed. tygr does so with its default
+    `trace_one_node` feature, measured in a second run below
+    (`cargo run --release --bin trees --features trace_one_node`).
+- tree-sitter keeps more, for incremental reparsing: rows and columns, and
+  what it needs to reuse subtrees. Reparsing after an edit, its strength,
+  isn't measured here.
 
-Each tree is checked by converting it to the shared `JsonValue`, with
-atoms decoded by serde_json.
+Each tree is checked by converting it to the shared `JsonValue`, with atoms
+decoded by serde_json, and tygr's delimiter and string-part ranges checked to
+tile the input.
 
 tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest 2.9.6:
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
 | tree-sitter | `29 (29–29)` | `48 (48–48)` | `37 (37–37)` |
-| tygr | `531 (526–533)` | `938 (934–939)` | `849 (845–853)` |
-| pest | `82 (81–82)` | `95 (94–96)` | `75 (74–75)` |
+| tygr | `373 (370–375)` | `515 (511–520)` | `390 (385–393)` |
+| pest | `81 (81–82)` | `94 (94–95)` | `74 (74–74)` |
 
 | vs tree-sitter, medians | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
 | tree-sitter | `1.00×` | `1.00×` | `1.00×` |
-| tygr | `18.14×` | `19.46×` | `22.70×` |
-| pest | `2.79×` | `1.98×` | `1.99×` |
+| tygr | `12.94×` | `10.78×` | `10.46×` |
+| pest | `2.82×` | `1.97×` | `1.99×` |
 
-tygr is faster than tree-sitter (18–23×) and pest (6.5–11×).
+With `--features trace_one_node`:
 
+| MB/s, median (95% CI) | canada | citm_catalog | twitter |
+|---|---:|---:|---:|
+| tree-sitter | `29 (29–29)` | `48 (48–48)` | `37 (37–37)` |
+| tygr (trace_one_node) | `272 (270–274)` | `392 (390–396)` | `310 (309–312)` |
+| pest | `81 (81–82)` | `91 (90–92)` | `71 (70–72)` |
+
+tygr is faster than tree-sitter (10–13×, or 8.2–9.4× tracing) and pest (4.6–5.5×,
+or 3.4–4.4× tracing).

@@ -15,6 +15,9 @@ use std::cell::RefCell;
 use std::hint::black_box;
 
 use harness::Parser;
+use tygr::{VecSep, Wrap};
+use tygr_json::Ws;
+use tygr_tree::{Atom, Comma};
 use pest::Parser as _;
 use pest::iterators::Pair;
 use pest_grammars::json::{JsonParser, Rule};
@@ -27,7 +30,11 @@ const PARSERS: [Parser; 3] = [
         |s| tree_sitter_parse(s).map(|tree| tree_sitter_value(tree.root_node(), s)),
     ),
     (
-        "tygr",
+        if cfg!(feature = "trace_one_node") {
+            "tygr (trace_one_node)"
+        } else {
+            "tygr"
+        },
         |s| black_box(tygr_tree::parse(s)).is_some(),
         |s| tygr_tree::parse(s).map(|node| tygr_value(&node, s)),
     ),
@@ -124,25 +131,65 @@ fn tygr_value(node: &tygr_tree::Node, input: &str) -> JsonValue {
     use tygr_tree::Node;
     match node {
         Node::Object(object) => {
-            bracketed(&input[object.range()], '{', '}');
-            let pairs = object.wrapped.iter().flat_map(|pairs| &pairs.items);
-            let pairs = pairs.map(|pair| {
-                let key = key(&input[pair.key.range()]);
+            let pairs = tygr_items(object, input, "{", "}").iter().map(|pair| {
+                assert_eq!(&input[pair.colon.1.range()], ":");
+                let key = key(tygr_string(&pair.key, input));
                 (key, tygr_value(&pair.value, input))
             });
             JsonValue::Object(pairs.collect())
         }
         Node::Array(array) => {
-            bracketed(&input[array.range()], '[', ']');
-            let items = array.wrapped.iter().flat_map(|items| &items.items);
+            let items = tygr_items(array, input, "[", "]").iter();
             JsonValue::Array(items.map(|item| tygr_value(item, input)).collect())
         }
-        Node::String(string) => atom(&input[string.range()]),
+        Node::String(string) => atom(tygr_string(string, input)),
         Node::Number(number) => atom(&input[number.range()]),
         Node::True(token) => atom(&input[token.range()]),
         Node::False(token) => atom(&input[token.range()]),
         Node::Null(token) => atom(&input[token.range()]),
     }
+}
+
+/// A string's text, once its parts' ranges are checked to tile it.
+fn tygr_string<'a>(string: &tygr_tree::JsonString, input: &'a str) -> &'a str {
+    use tygr_tree::StringPart;
+    assert_eq!(&input[string.open.range()], "\"");
+    assert_eq!(&input[string.close.range()], "\"");
+    let mut end = string.open.end;
+    for part in &string.parts {
+        let range = match part {
+            StringPart::Content(content) => content.range(),
+            StringPart::Escape(escape) => escape.range(),
+        };
+        assert_eq!(range.start, end);
+        let text = &input[range.clone()];
+        match part {
+            StringPart::Content(_) => assert!(!text.contains(['"', '\\'])),
+            StringPart::Escape(_) => assert!(text.starts_with('\\') && text.len() > 1),
+        }
+        end = range.end;
+    }
+    assert_eq!(string.close.start, end);
+    &input[string.open.start..string.close.end]
+}
+
+/// An object's or array's items, once its delimiters' ranges are checked.
+fn tygr_items<'a, T, Open, Close>(
+    node: &'a Wrap<(Atom<Open>, Ws), Option<VecSep<T, Comma>>, (Ws, Atom<Close>)>,
+    input: &str,
+    open: &str,
+    close: &str,
+) -> &'a [T] {
+    assert_eq!(&input[node.before.0.range()], open);
+    assert_eq!(&input[node.after.1.range()], close);
+    let Some(list) = &node.wrapped else {
+        return &[];
+    };
+    assert_eq!(list.seps.len() + 1, list.items.len());
+    for (_, comma, _) in &list.seps {
+        assert_eq!(&input[comma.range()], ",");
+    }
+    &list.items
 }
 
 fn pest_value(pair: Pair<'_, Rule>) -> JsonValue {

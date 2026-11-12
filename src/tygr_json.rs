@@ -23,7 +23,7 @@ char_class!(pub(crate) Hex, "hex", |c| c.is_ascii_hexdigit());
 /// Scanned, never stored.
 pub(crate) type Ws = PhantomData<StringOf<WsChar>>;
 
-pub(crate) type Comma = (Ws, StringEq!(","), Ws);
+type Comma = (Ws, StringEq!(","), Ws);
 
 #[derive(Parse)]
 pub(crate) struct Json(Ws, JsonValue, Ws);

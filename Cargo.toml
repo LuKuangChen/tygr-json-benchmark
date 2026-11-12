@@ -15,6 +15,10 @@ tree-sitter-json = "0.24"
 tygr = { path = "../tygr", default-features = false }
 winnow = "1"
 
+[features]
+# tygr's default: it records where it failed, as pest always does.
+trace_one_node = ["tygr/trace_one_node"]
+
 [profile.release]
 codegen-units = 1
 lto = true
