@@ -25,11 +25,7 @@ use value::JsonValue;
 
 const PARSERS: [Parser; 3] = [
     (
-        if cfg!(feature = "trace_one_node") {
-            "tygr (trace one node)"
-        } else {
-            "tygr (no trace)"
-        },
+        "tygr",
         |s| black_box(tygr_tree::parse(s)).is_some(),
         |s| tygr_tree::parse(s).map(|node| tygr_value(&node, s)),
     ),

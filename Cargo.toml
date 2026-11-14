@@ -11,12 +11,8 @@ pest_grammars = "2"
 serde_json = { version = "1", features = ["float_roundtrip"] }
 tree-sitter = "0.27"
 tree-sitter-json = "0.24"
-tygr = { version = "0.7", default-features = false }
+tygr = "0.8.0"
 winnow = "1"
-
-[features]
-# tygr's default: it records where it failed, as pest always does.
-trace_one_node = ["tygr/trace_one_node"]
 
 [profile.release]
 codegen-units = 1
