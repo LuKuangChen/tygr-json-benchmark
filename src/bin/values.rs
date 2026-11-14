@@ -15,16 +15,21 @@ use std::hint::black_box;
 
 use harness::Parser;
 
-const PARSERS: [Parser; 4] = [
+const PARSERS: [Parser; 5] = [
     (
         "serde_json",
         |s| black_box(serde_value(s)).is_some(),
         |s| serde_value(s).map(Into::into),
     ),
     (
-        "tygr",
+        "tygr (Max)",
         |s| black_box(tygr_json::parse(s)).is_some(),
         tygr_json::parse,
+    ),
+    (
+        "tygr (Min)",
+        |s| black_box(tygr_json::parse_untraced(s)).is_some(),
+        tygr_json::parse_untraced,
     ),
     (
         "winnow",

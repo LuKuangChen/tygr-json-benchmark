@@ -11,7 +11,7 @@ pest_grammars = "2"
 serde_json = { version = "1", features = ["float_roundtrip"] }
 tree-sitter = "0.27"
 tree-sitter-json = "0.24"
-tygr = "0.8.0"
+tygr = { path = "../tygr-0.9" }
 winnow = "1"
 
 [profile.release]
