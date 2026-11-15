@@ -29,12 +29,12 @@ type Comma = (Ws, StringEq!(","), Ws);
 struct Json(Ws, JsonValue, Ws);
 
 pub(crate) fn parse(input: &str) -> Option<JsonValue> {
-    Json::parse::<Value, Max>(input).ok().map(|json| json.1)
+    Json::parse::<success::Value, level::Max>(input).ok().map(|json| json.1)
 }
 
 /// The same parse tracing nothing: a failure says only that it failed.
 pub(crate) fn parse_untraced(input: &str) -> Option<JsonValue> {
-    Json::parse::<Value, Min>(input).ok().map(|json| json.1)
+    Json::parse::<success::Value, level::Min>(input).ok().map(|json| json.1)
 }
 
 #[derive(Parse)]
@@ -103,7 +103,7 @@ pub(crate) enum Escape {
 impl From<&Escape> for u16 {
     fn from(escape: &Escape) -> u16 {
         match escape {
-            Escape::Simple(c) => match c.value() {
+            Escape::Simple(c) => match c.0 {
                 'b' => '\x08' as u16,
                 'f' => '\x0C' as u16,
                 'n' => '\n' as u16,
@@ -112,7 +112,7 @@ impl From<&Escape> for u16 {
                 c => c as u16,
             },
             Escape::Unicode(_, a, b, c, d) => {
-                let hex: String = [a, b, c, d].iter().map(|h| h.value()).collect();
+                let hex: String = [a, b, c, d].iter().map(|h| h.0).collect();
                 u16::from_str_radix(&hex, 16).unwrap()
             }
         }

@@ -182,8 +182,8 @@ fn tygr_items<'a, Open, T, Close>(
     open: &str,
     close: &str,
 ) -> Vec<&'a T> {
-    assert_eq!(&input[node.before.0.range()], open);
-    assert_eq!(&input[node.after.1.range()], close);
+    assert_eq!(&input[node.prefix.0.range()], open);
+    assert_eq!(&input[node.suffix.1.range()], close);
     let Some((first, rest)) = &node.wrapped else {
         return Vec::new();
     };
