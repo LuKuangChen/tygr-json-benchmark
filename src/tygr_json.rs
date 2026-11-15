@@ -29,12 +29,12 @@ type Comma = (Ws, StringEq!(","), Ws);
 struct Json(Ws, JsonValue, Ws);
 
 pub(crate) fn parse(input: &str) -> Option<JsonValue> {
-    Json::parse::<success::Value, level::Max>(input).ok().map(|json| json.1)
+    Json::parse(input).ok().map(|json| json.1)
 }
 
 /// The same parse tracing nothing: a failure says only that it failed.
 pub(crate) fn parse_untraced(input: &str) -> Option<JsonValue> {
-    Json::parse::<success::Value, level::Min>(input).ok().map(|json| json.1)
+    Json::parse_with::<success::Value, level::Min>(input).ok().map(|json| json.1)
 }
 
 #[derive(Parse)]

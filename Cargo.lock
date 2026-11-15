@@ -354,7 +354,9 @@ checksum = "d0af592be68c579aa78a16846bd19422978c3c52e438523d45ff5d1bff1f9d4a"
 
 [[package]]
 name = "tygr"
-version = "0.8.0"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e30f33a49d5075fc7bd5e0efa91db51c60547e82786257de162cdef53d61b66a"
 dependencies = [
  "either",
  "tygr-derive",
@@ -362,7 +364,9 @@ dependencies = [
 
 [[package]]
 name = "tygr-derive"
-version = "0.8.0"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b11526c17c636ae9c3756e6cabe88b7c710e0818d53cefa55771690dff93c69d"
 dependencies = [
  "proc-macro2",
  "quote",

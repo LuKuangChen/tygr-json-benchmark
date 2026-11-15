@@ -19,12 +19,12 @@ pub(crate) type Comma = (Ws, Leaf<StringEq!(",")>, Ws);
 struct Document(Ws, Node, Ws);
 
 pub(crate) fn parse(input: &str) -> Option<Node> {
-    Document::parse::<success::Value, level::Max>(input).ok().map(|document| document.1)
+    Document::parse(input).ok().map(|document| document.1)
 }
 
 /// The same parse tracing nothing.
 pub(crate) fn parse_untraced(input: &str) -> Option<Node> {
-    Document::parse::<success::Value, level::Min>(input).ok().map(|document| document.1)
+    Document::parse_with::<success::Value, level::Min>(input).ok().map(|document| document.1)
 }
 
 /// Objects and arrays are boxed: their first item isn't behind a `Vec`.

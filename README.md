@@ -13,7 +13,6 @@ both benchmarks use its corpus, from
 ```sh
 cargo run --release --bin values
 cargo run --release --bin trees
-cargo run --release --bin trees --features trace_one_node
 ```
 
 Each benchmark is a separate binary, so the parsers in one can't change how
@@ -25,13 +24,13 @@ parentheses, a 95% confidence interval for it: the 40th and 61st of the
 sorted speeds. This interval comes from the sign test, which assumes nothing
 about how speeds are distributed. [`src/harness.rs`](src/harness.rs) has the
 check, the timing and the tables. All numbers are from an Apple M2, with
-rustc 1.98, LTO and one codegen unit, and tygr 0.7.0.
+rustc 1.97.1, LTO and one codegen unit, and tygr 0.9.0.
 
 ## Values
 
 This benchmark, [`src/bin/values.rs`](src/bin/values.rs), runs each parser
-with the least error tracking it offers, and checks that they all build the
-same JSON values.
+with the least error tracking it offers, and tygr also with its default, and
+checks that they all build the same JSON values.
 
 Each parser builds a JSON value with escapes decoded and numbers as
 correctly rounded `f64`:
@@ -55,8 +54,9 @@ The parsers:
 
 Their error tracking, set to the least each offers:
 - serde_json: the default; it builds detailed errors only on failure.
-- tygr: `default-features = false`, which turns off its default
-  `trace_one_node`.
+- tygr: `level::Min`, which traces nothing, in the `tygr (Min)` row. The
+  `tygr (Max)` row has the default, `level::Max`, which reports where a
+  parse failed and what was expected there.
 - winnow: `EmptyError`.
 - nom: `Check`.
 
@@ -74,21 +74,24 @@ serde_json 1.0.154, winnow 1.0.5, nom 8.0.0:
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| serde_json | `357 (356–358)` | `672 (669–675)` | `495 (494–496)` |
-| tygr | `325 (324–325)` | `416 (413–418)` | `254 (253–255)` |
-| winnow | `390 (389–390)` | `434 (433–436)` | `219 (218–220)` |
-| nom | `313 (313–314)` | `327 (326–329)` | `198 (197–199)` |
+| serde_json | `428 (427–429)` | `894 (889–899)` | `611 (610–613)` |
+| tygr (Max) | `426 (424–427)` | `521 (519–523)` | `315 (314–315)` |
+| tygr (Min) | `424 (423–425)` | `539 (537–540)` | `331 (329–332)` |
+| winnow | `525 (523–527)` | `532 (530–533)` | `268 (267–268)` |
+| nom | `371 (370–372)` | `402 (401–403)` | `253 (252–254)` |
 
 | vs serde_json, medians | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
 | serde_json | `1.00×` | `1.00×` | `1.00×` |
-| tygr | `0.91×` | `0.62×` | `0.51×` |
-| winnow | `1.09×` | `0.65×` | `0.44×` |
-| nom | `0.88×` | `0.49×` | `0.40×` |
+| tygr (Max) | `0.99×` | `0.58×` | `0.51×` |
+| tygr (Min) | `0.99×` | `0.60×` | `0.54×` |
+| winnow | `1.23×` | `0.59×` | `0.44×` |
+| nom | `0.87×` | `0.45×` | `0.41×` |
 
-Neither tygr nor winnow is faster on every file: winnow is faster on canada
-and citm_catalog, tygr on twitter. Both are faster than nom on all three
-files.
+Neither tygr nor winnow is faster on every file: winnow is faster on canada,
+tygr on twitter, and they are close on citm_catalog. Both are faster than
+nom on all three files. The two tygr rows differ by at most 5%: a parse
+that succeeds at `Max` only tracks how far it got.
 
 ## Trees of Ranges
 
@@ -119,9 +122,9 @@ Read these numbers with more care than the values benchmark's:
 - Error handling differs:
   - tygr and pest reject bad input, while tree-sitter recovers from it with
     error nodes.
-  - pest always records where parsing failed. tygr does this with its
-    `trace_one_node` feature, which is on by default but off here. The
-    second tygr row has it on.
+  - pest always records where parsing failed. tygr does this at
+    `level::Max`, its default and the first tygr row; the second row,
+    `level::Min`, traces nothing.
 - Safety differs: pest checks the remaining stack on every rule, so input
   nested too deeply fails with an error. tygr has no such check, and input
   nested deeply enough overflows the stack. pest's check comes with its
@@ -139,15 +142,14 @@ delimiter's text, and that each string's parts cover it end to end, with no
 gaps.
 
 tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest and pest_grammars
-2.9.6. The
-trace-one-node row is from a second run, with the `trace_one_node` feature:
+2.9.6:
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| tygr (no trace) | `351 (348–354)` | `497 (490–501)` | `404 (399–407)` |
-| tygr (trace one node) | `272 (271–272)` | `353 (351–354)` | `316 (314–317)` |
-| tree-sitter | `28 (28–28)` | `47 (47–47)` | `37 (36–37)` |
-| pest | `79 (77–80)` | `90 (89–93)` | `71 (71–72)` |
+| tygr (Max) | `506 (503–511)` | `660 (657–666)` | `538 (534–541)` |
+| tygr (Min) | `522 (514–527)` | `706 (698–710)` | `589 (583–591)` |
+| tree-sitter | `34 (34–34)` | `60 (59–61)` | `45 (45–46)` |
+| pest | `92 (91–93)` | `106 (105–106)` | `80 (80–81)` |
 
 pest has slowed down over its releases: on this machine, with the same
 grammar, pest 2.1.3 parsed the corpus at 395–663 MB/s.
