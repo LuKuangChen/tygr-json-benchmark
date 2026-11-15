@@ -29,8 +29,8 @@ rustc 1.97.1, LTO and one codegen unit, and tygr 0.9.0.
 ## Values
 
 This benchmark, [`src/bin/values.rs`](src/bin/values.rs), runs each parser
-with the least error tracking it offers, and tygr also with its default, and
-checks that they all build the same JSON values.
+with the least error tracking it offers, and checks that they all build the
+same JSON values.
 
 Each parser builds a JSON value with escapes decoded and numbers as
 correctly rounded `f64`:
@@ -54,9 +54,7 @@ The parsers:
 
 Their error tracking, set to the least each offers:
 - serde_json: the default; it builds detailed errors only on failure.
-- tygr: `level::Min`, which traces nothing, in the `tygr (Min)` row. The
-  `tygr (Max)` row has the default, `level::Max`, which reports where a
-  parse failed and what was expected there.
+- tygr: `level::Min`, which traces nothing.
 - winnow: `EmptyError`.
 - nom: `Check`.
 
@@ -74,24 +72,21 @@ serde_json 1.0.154, winnow 1.0.5, nom 8.0.0:
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| serde_json | `428 (427–429)` | `894 (889–899)` | `611 (610–613)` |
-| tygr (Max) | `426 (424–427)` | `521 (519–523)` | `315 (314–315)` |
-| tygr (Min) | `424 (423–425)` | `539 (537–540)` | `331 (329–332)` |
-| winnow | `525 (523–527)` | `532 (530–533)` | `268 (267–268)` |
-| nom | `371 (370–372)` | `402 (401–403)` | `253 (252–254)` |
+| serde_json | `439 (438–440)` | `910 (904–913)` | `636 (633–638)` |
+| tygr | `443 (442–446)` | `563 (561–565)` | `333 (332–335)` |
+| winnow | `536 (534–539)` | `550 (548–551)` | `275 (275–276)` |
+| nom | `407 (406–408)` | `403 (402–404)` | `256 (256–257)` |
 
 | vs serde_json, medians | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
 | serde_json | `1.00×` | `1.00×` | `1.00×` |
-| tygr (Max) | `0.99×` | `0.58×` | `0.51×` |
-| tygr (Min) | `0.99×` | `0.60×` | `0.54×` |
-| winnow | `1.23×` | `0.59×` | `0.44×` |
-| nom | `0.87×` | `0.45×` | `0.41×` |
+| tygr | `1.01×` | `0.62×` | `0.52×` |
+| winnow | `1.22×` | `0.60×` | `0.43×` |
+| nom | `0.93×` | `0.44×` | `0.40×` |
 
 Neither tygr nor winnow is faster on every file: winnow is faster on canada,
-tygr on twitter, and they are close on citm_catalog. Both are faster than
-nom on all three files. The two tygr rows differ by at most 5%: a parse
-that succeeds at `Max` only tracks how far it got.
+tygr on citm_catalog and twitter. Both are faster than nom on all three
+files.
 
 ## Trees of Ranges
 
@@ -146,10 +141,10 @@ tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest and pest_grammars
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| tygr (Max) | `506 (503–511)` | `660 (657–666)` | `538 (534–541)` |
 | tygr (Min) | `522 (514–527)` | `706 (698–710)` | `589 (583–591)` |
-| tree-sitter | `34 (34–34)` | `60 (59–61)` | `45 (45–46)` |
+| tygr (Max) | `506 (503–511)` | `660 (657–666)` | `538 (534–541)` |
 | pest | `92 (91–93)` | `106 (105–106)` | `80 (80–81)` |
+| tree-sitter | `34 (34–34)` | `60 (59–61)` | `45 (45–46)` |
 
 pest has slowed down over its releases: on this machine, with the same
 grammar, pest 2.1.3 parsed the corpus at 395–663 MB/s.
