@@ -20,10 +20,9 @@ the other's are compiled. Each first checks every parser's output against
 serde_json's, on the files and on a few small samples. Then every parser
 parses each file 100 times, taking turns with the others so that any drift
 in speed affects them all alike. The tables give the median speed and, in
-parentheses, a 95% confidence interval for it: the 40th and 61st of the
-sorted speeds. This interval comes from the sign test, which assumes nothing
-about how speeds are distributed. [`src/harness.rs`](src/harness.rs) has the
-check, the timing and the tables. All numbers are from an Apple M2, with
+parentheses, a 95% confidence interval for it that assumes nothing about how
+speeds are distributed; [`src/harness.rs`](src/harness.rs) has the check,
+the timing and the tables. All numbers are from an Apple M2, with
 rustc 1.97.1, LTO and one codegen unit, and tygr 0.9.0.
 
 ## Values
