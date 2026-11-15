@@ -118,7 +118,7 @@ Read these numbers with more care than the values benchmark's:
   - tygr and pest reject bad input, while tree-sitter recovers from it with
     error nodes.
   - pest always records where parsing failed. tygr does this at
-    `level::Max`, its default and the first tygr row; the second row,
+    `level::Max`, its default and the second tygr row; the first,
     `level::Min`, traces nothing.
 - Safety differs: pest checks the remaining stack on every rule, so input
   nested too deeply fails with an error. tygr has no such check, and input
