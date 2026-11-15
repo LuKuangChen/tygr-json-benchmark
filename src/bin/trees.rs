@@ -25,12 +25,12 @@ use value::JsonValue;
 
 const PARSERS: [Parser; 4] = [
     (
-        "tygr (Max)",
+        "tygr (level::Max)",
         |s| black_box(tygr_tree::parse(s)).is_some(),
         |s| tygr_tree::parse(s).map(|node| tygr_value(&node, s)),
     ),
     (
-        "tygr (Min)",
+        "tygr (level::Min)",
         |s| black_box(tygr_tree::parse_untraced(s)).is_some(),
         |s| tygr_tree::parse_untraced(s).map(|node| tygr_value(&node, s)),
     ),
