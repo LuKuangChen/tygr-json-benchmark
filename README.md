@@ -78,10 +78,10 @@ serde_json 1.0.154, winnow 1.0.5, nom 8.0.0:
 
 | vs serde_json, medians | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| serde_json | `433 (432–435)` | `905 (900–912)` | `624 (621–627)` |
-| tygr | `431 (430–432)` | `558 (553–559)` | `331 (328–332)` |
-| winnow | `537 (534–538)` | `545 (542–547)` | `273 (272–274)` |
-| nom | `403 (402–405)` | `408 (406–410)` | `257 (256–258)` |
+| serde_json | `1.00×` | `1.00×` | `1.00×` |
+| tygr | `0.99×` | `0.62×` | `0.53×` |
+| winnow | `1.24×` | `0.60×` | `0.44×` |
+| nom | `0.93×` | `0.45×` | `0.41×` |
 
 Neither tygr nor winnow is faster on every file: winnow is faster on canada,
 tygr on citm_catalog and twitter. Both are faster than nom on all three
