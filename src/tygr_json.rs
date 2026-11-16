@@ -30,13 +30,20 @@ struct Json(Ws, JsonValue, Ws);
 
 /// Tracing nothing, the least tygr offers: a failure says only that it failed.
 pub(crate) fn parse(input: &str) -> Option<JsonValue> {
-    Json::parse_with::<success::Value, level::Min>(input).ok().map(|json| json.1)
+    Json::parse_with::<success::Value, level::Min>(input)
+        .ok()
+        .map(|json| json.1)
 }
+
+#[derive(Parse)]
+pub(crate) struct JsonArray(StringEq!("["), Ws, Option<Elements>, StringEq!("]"));
+
+#[derive(Parse)]
+pub(crate) struct Elements(JsonValue, Ws, Vec<(Comma, JsonValue, Ws)>);
 
 #[derive(Parse)]
 pub(crate) struct JsonObject(StringEq!("{"), Ws, Option<Members>, StringEq!("}"));
 
-/// Each member takes the whitespace after it.
 #[derive(Parse)]
 pub(crate) struct Members(JsonMember, Vec<(Comma, JsonMember)>);
 
@@ -44,11 +51,11 @@ pub(crate) struct Members(JsonMember, Vec<(Comma, JsonMember)>);
 pub(crate) struct JsonMember {
     #[tygr(try_from_infallible = JsonString)]
     key: String,
-    before_colon: Ws,
+    ws1: Ws,
     colon: StringEq!(":"),
-    after_colon: Ws,
+    ws2: Ws,
     value: JsonValue,
-    after: Ws,
+    ws3: Ws,
 }
 
 impl From<JsonObject> for HashMap<String, JsonValue> {
@@ -59,13 +66,6 @@ impl From<JsonObject> for HashMap<String, JsonValue> {
         members.map(|m| (m.key, m.value)).collect()
     }
 }
-
-#[derive(Parse)]
-pub(crate) struct JsonArray(StringEq!("["), Ws, Option<Elements>, StringEq!("]"));
-
-/// Each element with the whitespace after it.
-#[derive(Parse)]
-pub(crate) struct Elements(JsonValue, Ws, Vec<(Comma, JsonValue, Ws)>);
 
 impl From<JsonArray> for Vec<JsonValue> {
     fn from(array: JsonArray) -> Self {
