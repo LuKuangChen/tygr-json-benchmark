@@ -53,11 +53,11 @@ pub(crate) struct Members(JsonMember, Vec<(Comma, JsonMember)>);
 pub(crate) struct JsonMember {
     #[tygr(try_from_infallible = JsonString)]
     key: String,
-    before_colon: Ws,
+    ws1: Ws,
     colon: StringEq!(":"),
-    after_colon: Ws,
+    ws2: Ws,
     value: JsonValue,
-    after: Ws,
+    ws3: Ws,
 }
 
 impl From<JsonObject> for HashMap<String, JsonValue> {
