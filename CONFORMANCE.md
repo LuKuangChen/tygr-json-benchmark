@@ -12,6 +12,7 @@ them. Regenerate this file with
 | tygr | none | none |
 | winnow | `+1`, `01`, `1.`, `-inf`, a raw tab in a string, a raw newline in a string, `"\u+123"` | `"\uD800"`, `"\uDC00"`, `"\uDFFF\uD800"` |
 | nom | `+1`, `01`, `1.`, `.5`, `inf`, `nan`, `Infinity`, a raw tab in a string, a raw newline in a string, `"\u+123"` | `"\uD800"`, `"\uDC00"`, `"\uDFFF\uD800"` |
+| chumsky | a raw tab in a string, a raw newline in a string, a form feed as whitespace, a vertical tab as whitespace, a no-break space as whitespace | `"\uD800"`, `"\uDC00"`, `"\uDFFF\uD800"` |
 | tygr (tree) | none | none |
 | tree-sitter | `01`, `1.`, a raw tab in a string, `"\u+123"`, `"\u12"`, a `//` comment, a `/* */` comment, two values (`1 2`), empty input, a form feed as whitespace, a vertical tab as whitespace, a byte-order mark | `0.0e+0` |
 | pest | none | none |

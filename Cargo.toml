@@ -5,6 +5,7 @@ edition = "2024"
 publish = false
 
 [dependencies]
+chumsky = "1.0.0-alpha.8"
 nom = "8"
 pest = "2"
 pest_grammars = "2"

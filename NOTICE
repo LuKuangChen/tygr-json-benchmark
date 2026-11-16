@@ -1,7 +1,9 @@
 `src/nom_json.rs` is adapted from nom (https://github.com/rust-bakery/nom),
-and `src/winnow_json.rs` from winnow (https://github.com/winnow-rs/winnow).
-Both are under the MIT license below. nom's license file begins
-"Copyright (c) 2014-2019 Geoffroy Couprie"; winnow's has no copyright line.
+`src/winnow_json.rs` from winnow (https://github.com/winnow-rs/winnow), and
+`src/chumsky_json.rs` from chumsky (https://github.com/zesterer/chumsky).
+All three are under the MIT license below. nom's license file begins
+"Copyright (c) 2014-2019 Geoffroy Couprie", chumsky's "Copyright (c) 2021
+Joshua Barretto"; winnow's has no copyright line.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

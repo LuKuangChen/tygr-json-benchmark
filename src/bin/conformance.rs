@@ -1,6 +1,8 @@
 //! How each parser departs from json.org's grammar, as Markdown:
 //! `cargo run --release --bin conformance > CONFORMANCE.md`.
 
+#[path = "../chumsky_json.rs"]
+mod chumsky_json;
 #[path = "../nom_json.rs"]
 mod nom_json;
 #[allow(dead_code)] // Only `parse` is used here.
@@ -103,13 +105,14 @@ fn tree_sitter(input: &str) -> bool {
     tree.is_some_and(|tree| !tree.root_node().has_error())
 }
 
-const PARSERS: [(&str, fn(&str) -> bool); 7] = [
+const PARSERS: [(&str, fn(&str) -> bool); 8] = [
     ("serde_json", |s| {
         serde_json::from_str::<serde_json::Value>(s).is_ok()
     }),
     ("tygr", |s| tygr_json::parse(s).is_some()),
     ("winnow", |s| winnow_json::parse(s).is_some()),
     ("nom", |s| nom_json::parse(s).is_some()),
+    ("chumsky", |s| chumsky_json::parse(s).is_some()),
     ("tygr (tree)", |s| tygr_tree::parse(s).is_some()),
     ("tree-sitter", tree_sitter),
     ("pest", |s| JsonParser::parse(Rule::json, s).is_ok()),

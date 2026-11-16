@@ -36,7 +36,7 @@ correctly rounded `f64`:
 - serde_json builds its own
   [`serde_json::Value`](https://github.com/serde-rs/json/blob/8c535a260ce561eaab4111aafc29038eb9f77ff3/src/value/mod.rs#L116),
   with `float_roundtrip` on so that floats are correctly rounded.
-- tygr, winnow and nom build the shared [`JsonValue`](src/value.rs), the
+- tygr, winnow, nom and chumsky build the shared [`JsonValue`](src/value.rs), the
   same as nom's
   [`JsonValue`](https://github.com/rust-bakery/nom/blob/51c3c4e44fa78a8a09b413419372b97b2cc2a787/benchmarks/benches/json.rs#L22)
   and winnow's
@@ -50,42 +50,51 @@ The parsers:
   [winnow's example](https://github.com/winnow-rs/winnow/blob/21b3ab2535a675768a170a851efda83253b9eb21/examples/json/parser_dispatch.rs).
 - nom: [`src/nom_json.rs`](src/nom_json.rs), adapted from
   [nom's benchmark](https://github.com/rust-bakery/nom/blob/51c3c4e44fa78a8a09b413419372b97b2cc2a787/benchmarks/benches/json.rs).
+- chumsky: [`src/chumsky_json.rs`](src/chumsky_json.rs), adapted from
+  [chumsky's example](https://github.com/zesterer/chumsky/blob/1.0.0-alpha.8/examples/json.rs),
+  with its error recovery and trailing commas removed and its strings
+  decoded rather than kept as text.
 
 Their error tracking, set to the least each offers:
 - serde_json: the default; it builds detailed errors only on failure.
 - tygr: `level::Min`, which traces nothing.
 - winnow: `EmptyError`.
 - nom: `Check`.
+- chumsky: `EmptyErr`.
 
 tygr follows [json.org](https://www.json.org)'s grammar exactly. The others
 depart from it in ways the corpus doesn't use, all listed in
 [`CONFORMANCE.md`](CONFORMANCE.md). Some change how much a parser checks:
 - serde_json checks more: it limits nesting to 127 levels, which guards the
-  stack (tygr, winnow and nom have no such guard), and rejects numbers
-  beyond `f64`'s range.
-- winnow and nom check less: they let raw control characters into strings.
-  Their number parsers also accept forms JSON doesn't, such as `+1` and
-  `01`.
+  stack (tygr, winnow and nom have no such guard; chumsky grows the stack
+  instead, with its default `stacker` feature), and rejects numbers beyond
+  `f64`'s range.
+- winnow, nom and chumsky check less: they let raw control characters into
+  strings. winnow's and nom's number parsers also accept forms JSON
+  doesn't, such as `+1` and `01`, and chumsky's `padded()` takes any Unicode
+  whitespace.
 
-serde_json 1.0.154, winnow 1.0.5, nom 8.0.0:
+serde_json 1.0.154, winnow 1.0.5, nom 8.0.0, chumsky 1.0.0-alpha.8:
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| serde_json | `433 (432–435)` | `905 (900–912)` | `624 (621–627)` |
-| tygr | `431 (430–432)` | `558 (553–559)` | `331 (328–332)` |
-| winnow | `537 (534–538)` | `545 (542–547)` | `273 (272–274)` |
-| nom | `403 (402–405)` | `408 (406–410)` | `257 (256–258)` |
+| serde_json | `425 (423–427)` | `895 (888–900)` | `607 (603–609)` |
+| tygr | `426 (424–428)` | `548 (543–552)` | `325 (322–327)` |
+| winnow | `519 (516–524)` | `536 (533–540)` | `268 (266–270)` |
+| nom | `396 (394–398)` | `399 (396–403)` | `252 (251–255)` |
+| chumsky | `279 (278–279)` | `229 (228–229)` | `183 (181–184)` |
 
 | vs serde_json, medians | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
 | serde_json | `1.00×` | `1.00×` | `1.00×` |
-| tygr | `0.99×` | `0.62×` | `0.53×` |
-| winnow | `1.24×` | `0.60×` | `0.44×` |
-| nom | `0.93×` | `0.45×` | `0.41×` |
+| tygr | `1.00×` | `0.61×` | `0.54×` |
+| winnow | `1.22×` | `0.60×` | `0.44×` |
+| nom | `0.93×` | `0.45×` | `0.42×` |
+| chumsky | `0.66×` | `0.26×` | `0.30×` |
 
 Neither tygr nor winnow is faster on every file: winnow is faster on canada,
-tygr on citm_catalog and twitter. Both are faster than nom on all three
-files.
+tygr on citm_catalog and twitter. Both are faster than nom, and all three
+than chumsky, on every file.
 
 ## Trees of Ranges
 

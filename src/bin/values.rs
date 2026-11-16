@@ -1,5 +1,7 @@
 //! JSON pare throughput of serde_json, tygr, winnow and nom; see the README.
 
+#[path = "../chumsky_json.rs"]
+mod chumsky_json;
 #[path = "../harness.rs"]
 mod harness;
 #[path = "../nom_json.rs"]
@@ -15,7 +17,7 @@ use std::hint::black_box;
 
 use harness::Parser;
 
-const PARSERS: [Parser; 4] = [
+const PARSERS: [Parser; 5] = [
     (
         "serde_json",
         |s| black_box(serde_value(s)).is_some(),
@@ -35,6 +37,11 @@ const PARSERS: [Parser; 4] = [
         "nom",
         |s| black_box(nom_json::parse(s)).is_some(),
         nom_json::parse,
+    ),
+    (
+        "chumsky",
+        |s| black_box(chumsky_json::parse(s)).is_some(),
+        chumsky_json::parse,
     ),
 ];
 
