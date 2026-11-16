@@ -71,17 +71,17 @@ serde_json 1.0.154, winnow 1.0.5, nom 8.0.0:
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| serde_json | `439 (438–440)` | `910 (904–913)` | `636 (633–638)` |
-| tygr | `443 (442–446)` | `563 (561–565)` | `333 (332–335)` |
-| winnow | `536 (534–539)` | `550 (548–551)` | `275 (275–276)` |
-| nom | `407 (406–408)` | `403 (402–404)` | `256 (256–257)` |
+| serde_json | `433 (432–435)` | `905 (900–912)` | `624 (621–627)` |
+| tygr | `431 (430–432)` | `558 (553–559)` | `331 (328–332)` |
+| winnow | `537 (534–538)` | `545 (542–547)` | `273 (272–274)` |
+| nom | `403 (402–405)` | `408 (406–410)` | `257 (256–258)` |
 
 | vs serde_json, medians | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| serde_json | `1.00×` | `1.00×` | `1.00×` |
-| tygr | `1.01×` | `0.62×` | `0.52×` |
-| winnow | `1.22×` | `0.60×` | `0.43×` |
-| nom | `0.93×` | `0.44×` | `0.40×` |
+| serde_json | `433 (432–435)` | `905 (900–912)` | `624 (621–627)` |
+| tygr | `431 (430–432)` | `558 (553–559)` | `331 (328–332)` |
+| winnow | `537 (534–538)` | `545 (542–547)` | `273 (272–274)` |
+| nom | `403 (402–405)` | `408 (406–410)` | `257 (256–258)` |
 
 Neither tygr nor winnow is faster on every file: winnow is faster on canada,
 tygr on citm_catalog and twitter. Both are faster than nom on all three
@@ -140,10 +140,10 @@ tree-sitter 0.27.2 with tree-sitter-json 0.24.8, pest and pest_grammars
 
 | MB/s, median (95% CI) | canada | citm_catalog | twitter |
 |---|---:|---:|---:|
-| tygr (level::Min) | `522 (514–527)` | `706 (698–710)` | `589 (583–591)` |
-| tygr (level::Max) | `506 (503–511)` | `660 (657–666)` | `538 (534–541)` |
-| pest | `92 (91–93)` | `106 (105–106)` | `80 (80–81)` |
-| tree-sitter | `34 (34–34)` | `60 (59–61)` | `45 (45–46)` |
+| tygr (level::Min) | `557 (554–560)` | `730 (726–734)` | `609 (605–614)` |
+| tygr (level::Max) | `544 (542–547)` | `675 (673–678)` | `564 (560–566)` |
+| pest | `93 (93–93)` | `107 (107–108)` | `82 (82–82)` |
+| tree-sitter | `36 (36–36)` | `62 (62–63)` | `47 (47–47)` |
 
 pest has slowed down over its releases: on this machine, with the same
 grammar, pest 2.1.3 parsed the corpus at 395–663 MB/s.

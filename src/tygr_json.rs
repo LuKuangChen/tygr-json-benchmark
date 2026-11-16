@@ -23,40 +23,37 @@ char_class!(pub(crate) Hex, "hex", |c| c.is_ascii_hexdigit());
 /// Scanned, never stored.
 pub(crate) type Ws = PhantomData<StringOf<WsChar>>;
 
-type Comma = (Ws, StringEq!(","), Ws);
+type Comma = (StringEq!(","), Ws);
 
 #[derive(Parse)]
 struct Json(Ws, JsonValue, Ws);
 
+/// Tracing nothing, the least tygr offers: a failure says only that it failed.
 pub(crate) fn parse(input: &str) -> Option<JsonValue> {
-    Json::parse(input).ok().map(|json| json.1)
-}
-
-/// The same parse tracing nothing: a failure says only that it failed.
-pub(crate) fn parse_untraced(input: &str) -> Option<JsonValue> {
     Json::parse_with::<success::Value, level::Min>(input).ok().map(|json| json.1)
 }
 
 #[derive(Parse)]
-pub(crate) struct JsonObject(
-    Wrap<
-        (StringEq!("{"), Ws),
-        Option<(JsonMember, Vec<(Comma, JsonMember)>)>,
-        (Ws, StringEq!("}")),
-    >,
-);
+pub(crate) struct JsonObject(StringEq!("{"), Ws, Option<Members>, StringEq!("}"));
+
+/// Each member takes the whitespace after it.
+#[derive(Parse)]
+pub(crate) struct Members(JsonMember, Vec<(Comma, JsonMember)>);
 
 #[derive(Parse)]
 pub(crate) struct JsonMember {
     #[tygr(try_from_infallible = JsonString)]
     key: String,
-    colon: (Ws, StringEq!(":"), Ws),
+    before_colon: Ws,
+    colon: StringEq!(":"),
+    after_colon: Ws,
     value: JsonValue,
+    after: Ws,
 }
 
 impl From<JsonObject> for HashMap<String, JsonValue> {
     fn from(object: JsonObject) -> Self {
-        let members = object.0.into_inner().into_iter().flat_map(|(first, rest)| {
+        let members = object.2.into_iter().flat_map(|Members(first, rest)| {
             std::iter::once(first).chain(rest.into_iter().map(|(_, member)| member))
         });
         members.map(|m| (m.key, m.value)).collect()
@@ -64,17 +61,19 @@ impl From<JsonObject> for HashMap<String, JsonValue> {
 }
 
 #[derive(Parse)]
-pub(crate) struct JsonArray(
-    Wrap<(StringEq!("["), Ws), Option<(JsonValue, Vec<(Comma, JsonValue)>)>, (Ws, StringEq!("]"))>,
-);
+pub(crate) struct JsonArray(StringEq!("["), Ws, Option<Elements>, StringEq!("]"));
+
+/// Each element with the whitespace after it.
+#[derive(Parse)]
+pub(crate) struct Elements(JsonValue, Ws, Vec<(Comma, JsonValue, Ws)>);
 
 impl From<JsonArray> for Vec<JsonValue> {
     fn from(array: JsonArray) -> Self {
-        let Some((first, rest)) = array.0.into_inner() else {
+        let Some(Elements(first, _, rest)) = array.2 else {
             return Vec::new();
         };
         std::iter::once(first)
-            .chain(rest.into_iter().map(|(_, item)| item))
+            .chain(rest.into_iter().map(|(_, item, _)| item))
             .collect()
     }
 }
@@ -91,7 +90,7 @@ pub(crate) struct JsonString(
 
 /// Adjacent escapes; a surrogate pair is always within one sequence.
 #[derive(Parse)]
-pub(crate) struct EscapeSequence(Vec1<Prefix<StringEq!("\\"), Escape>>);
+pub(crate) struct EscapeSequence(Vec1<(StringEq!("\\"), Escape)>);
 
 #[derive(Parse)]
 pub(crate) enum Escape {
@@ -125,7 +124,7 @@ impl From<EscapeSequence> for String {
         let units: Vec<u16> = sequence
             .0
             .iter()
-            .map(|escape| u16::from(&**escape))
+            .map(|(_, escape)| u16::from(escape))
             .collect();
         String::from_utf16_lossy(&units)
     }
@@ -160,7 +159,7 @@ impl From<JsonBool> for bool {
 #[derive(Parse)]
 pub(crate) enum Integer {
     Zero(StringEq!("0")),
-    NonZero((OneNine, StringOf<Digit>)),
+    NonZero(OneNine, StringOf<Digit>),
 }
 
 #[derive(Parse)]
@@ -171,9 +170,12 @@ pub(crate) struct Exponent {
 }
 
 #[derive(Parse)]
+pub(crate) struct Fraction(StringEq!("."), StringOf1<Digit>);
+
+#[derive(Parse)]
 pub(crate) struct JsonNumber {
     minus: Option<StringEq!("-")>,
     integer: Integer,
-    fraction: Option<Prefix<StringEq!("."), StringOf1<Digit>>>,
+    fraction: Option<Fraction>,
     exponent: Option<Exponent>,
 }

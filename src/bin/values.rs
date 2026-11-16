@@ -23,8 +23,8 @@ const PARSERS: [Parser; 4] = [
     ),
     (
         "tygr",
-        |s| black_box(tygr_json::parse_untraced(s)).is_some(),
-        tygr_json::parse_untraced,
+        |s| black_box(tygr_json::parse(s)).is_some(),
+        tygr_json::parse,
     ),
     (
         "winnow",
