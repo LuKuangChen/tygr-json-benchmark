@@ -38,14 +38,12 @@ pub(crate) fn parse(input: &str) -> Option<JsonValue> {
 #[derive(Parse)]
 pub(crate) struct JsonArray(StringEq!("["), Ws, Option<Elements>, StringEq!("]"));
 
-/// Each element with the whitespace after it.
 #[derive(Parse)]
 pub(crate) struct Elements(JsonValue, Ws, Vec<(Comma, JsonValue, Ws)>);
 
 #[derive(Parse)]
 pub(crate) struct JsonObject(StringEq!("{"), Ws, Option<Members>, StringEq!("}"));
 
-/// Each member takes the whitespace after it.
 #[derive(Parse)]
 pub(crate) struct Members(JsonMember, Vec<(Comma, JsonMember)>);
 
